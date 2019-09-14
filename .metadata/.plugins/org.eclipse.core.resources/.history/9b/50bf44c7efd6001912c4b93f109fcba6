@@ -73,13 +73,4 @@ public class ImageCodeGenerator implements ValidateCodeGenerator {
 		return new Color(r, g, b);
 	}
 
-	public SecurityProperties getSecurityProperties() {
-		return securityProperties;
-	}
-
-	public void setSecurityProperties(SecurityProperties securityProperties) {
-		this.securityProperties = securityProperties;
-	}
-
-	
 }

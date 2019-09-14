@@ -4,21 +4,41 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.image.BufferedImage;
+import java.io.IOException;
 import java.util.Random;
 
+import javax.imageio.ImageIO;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.social.connect.web.HttpSessionSessionStrategy;
+import org.springframework.social.connect.web.SessionStrategy;
 import org.springframework.web.bind.ServletRequestUtils;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import com.imooc.security.core.properties.SecurityProperties;
 
-public class ImageCodeGenerator implements ValidateCodeGenerator {
-
+@RestController
+public class ValidateCodeController {
+	
+	public static final String SESSION_KEY = "SESSION_KEY_IMAGE_CODE";
+	
+	private SessionStrategy sessionStrategy = new HttpSessionSessionStrategy();
+	
 	@Autowired
 	private SecurityProperties securityProperties;
-	
-	@Override
-	public ImageCode generate(ServletWebRequest request) {
+
+	@GetMapping("/code/image")
+	public void createCode(ServletWebRequest request, HttpServletResponse response) throws IOException {
+		ImageCode imageCode = createImageCode(request);
+		sessionStrategy.setAttribute(request, SESSION_KEY, imageCode);
+		ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
+	}
+
+	private ImageCode createImageCode(ServletWebRequest request) {
 		int width = ServletRequestUtils.getIntParameter(request.getRequest(), "width", securityProperties.getCode().getImage().getWidth());
 		int height = ServletRequestUtils.getIntParameter(request.getRequest(), "height", securityProperties.getCode().getImage().getHeight());;
 		BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
@@ -72,14 +92,5 @@ public class ImageCodeGenerator implements ValidateCodeGenerator {
 		int b = fc + random.nextInt(bc - fc);
 		return new Color(r, g, b);
 	}
-
-	public SecurityProperties getSecurityProperties() {
-		return securityProperties;
-	}
-
-	public void setSecurityProperties(SecurityProperties securityProperties) {
-		this.securityProperties = securityProperties;
-	}
-
 	
 }
