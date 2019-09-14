@@ -10,9 +10,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import com.imooc.security.browser.authentication.ImoocAuthenticationFailtureHandler;
 import com.imooc.security.core.properties.SecurityProperties;
+import com.imooc.security.core.validate.code.ValidateCodeFilter;
 @Configuration
 public class BrowserSecurityConfig extends WebSecurityConfigurerAdapter {
 	
@@ -32,7 +34,12 @@ public class BrowserSecurityConfig extends WebSecurityConfigurerAdapter {
 	
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
-		http.formLogin()
+		
+		ValidateCodeFilter validateCodeFilter = new ValidateCodeFilter();
+		validateCodeFilter.setAuthenticationFailureHandler(imoocAuthenticationFailtureHandler);
+		
+		http.addFilterBefore(validateCodeFilter, UsernamePasswordAuthenticationFilter.class)
+			.formLogin()
 			//.loginPage("/imooc-signIn.html")
 			.loginPage("/authentication/require")
 			.loginProcessingUrl("/authentication/form")
@@ -42,7 +49,9 @@ public class BrowserSecurityConfig extends WebSecurityConfigurerAdapter {
 			.and()
 			.authorizeRequests()
 			//.antMatchers("/imooc-signIn.html").permitAll()
-			.antMatchers("/authentication/require", securityProperties.getBrowser().getLoginPage()).permitAll()
+			.antMatchers("/authentication/require",
+					securityProperties.getBrowser().getLoginPage(),
+					"/code/image").permitAll()
 			.anyRequest()
 			.authenticated()
 			.and()

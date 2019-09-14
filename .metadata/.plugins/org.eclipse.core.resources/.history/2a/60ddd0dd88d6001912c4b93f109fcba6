@@ -1,0 +1,5 @@
+package com.imooc.security.core.vaildate.code;
+
+public class ImageCode {
+
+}
