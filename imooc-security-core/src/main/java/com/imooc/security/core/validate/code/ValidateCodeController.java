@@ -14,12 +14,14 @@ import javax.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.social.connect.web.HttpSessionSessionStrategy;
 import org.springframework.social.connect.web.SessionStrategy;
+import org.springframework.web.bind.ServletRequestBindingException;
 import org.springframework.web.bind.ServletRequestUtils;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.ServletWebRequest;
 
 import com.imooc.security.core.properties.SecurityProperties;
+import com.imooc.security.core.validate.code.sms.SmsCodeSender;
 
 @RestController
 public class ValidateCodeController {
@@ -33,12 +35,27 @@ public class ValidateCodeController {
 	
 	@Autowired
 	private ValidateCodeGenerator imageCodeGenerator;
+	
+	@Autowired
+	private ValidateCodeGenerator smsCodeGenerator;
+	
+	@Autowired
+	private SmsCodeSender smsCodeSender;
 
 	@GetMapping("/code/image")
 	public void createCode(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		ImageCode imageCode = imageCodeGenerator.generate(new ServletWebRequest(request));
+		ImageCode imageCode = (ImageCode) imageCodeGenerator.generate(new ServletWebRequest(request));
 		sessionStrategy.setAttribute(new ServletWebRequest(request), SESSION_KEY, imageCode);
 		ImageIO.write(imageCode.getImage(), "JPEG", response.getOutputStream());
+	}
+	
+	@GetMapping("/code/sms")
+	public void createSmsCode(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletRequestBindingException {
+		ValidateCode smsCode = imageCodeGenerator.generate(new ServletWebRequest(request));
+		sessionStrategy.setAttribute(new ServletWebRequest(request), SESSION_KEY, smsCode);
+		String mobile = ServletRequestUtils.getRequiredStringParameter(request, "mobile");
+		smsCode.setCode(smsCodeGenerator.generate(new ServletWebRequest(request)).getCode());
+		smsCodeSender.send(mobile, smsCode.getCode());
 	}
 
 //	private ImageCode createImageCode(ServletWebRequest request) {

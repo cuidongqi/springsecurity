@@ -1,0 +1,5 @@
+package com.imooc.security.core.validate.code.sms;
+
+public class DefaultSmsCodeSender {
+
+}
